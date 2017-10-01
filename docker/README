@@ -1,0 +1,65 @@
+To start the Learning Toolbox, you have to follow these steps:
+1. Download and install docker (or boot2docker -in case of Windows) on your machine
+2. If you have a Windows OS, download the Oracle Virtual Box software ()
+3. (Optional) Checkout the file https://github.com/learning-layers/LTB-API/config/instance.php.dist
+4. Checkout the https://github.com/learning-layers/LTB-API/docker directory.
+This will be your working directory to start up the docker server.
+This can be done by running in your git enabled environment where you want to run docker:
+git archive --remote=https://github.com/learning-layers/LTB-API --format=tar HEAD  docker > docker.tar | untar 
+5. (Optional) Place and rename the file instance.php.dist to the docker/learningtoolbox/instance.php
+6. Start up the Virtual Box software and start the virtual Machine or type in the command line
+docker start.
+
+Alternatively, you can skip the Virtual Box from Oracle and work from a command line 
+DOS prompt only. Start the Docker --> Boot2Docker Start from the menu, which will give you the prompt and 
+the virtual machine installation or open a cmd box, go to the Boot2Docker for Windows 
+installation directory (C:\Program Files\boot2docker for windows\") and type boot2docker start
+7. If you are on Windows you can follow the following steps to make use of the 
+files you have locally available. This is an optional step but necessary to prevent
+copying the files from step 4 into your docker environment.
+    a) Edit the settings in Virtual Box
+    b) Add a shared folder
+    c) Choose as the path of the folder C:\<path to your docker files>
+    d) Choose as name some name you remember: win_docker
+    e) Open a command line and move to your boot2docker directory
+    f) Type boot2docker ssh which will start a Linux shell pointing to the 
+       virtual machine running
+    g) Now we have to mount this docker directory to be able to run these 
+        scripts. Possibly we can also mount the vendor directory in your local 
+        install to speed up the process, but that is optional. 
+            If you are using Virtual Box, you can copy the mountdocker script to
+        some directory you can reach under C:\Users because this is automa-
+        tically mounted by vbox. Check whether this file is in Unix format (No 
+        ^M chars in the file) and otherwise convert it: (dos2unix mountdocker).
+        Change the directory in the Virtual Box terminal and run this shell 
+        file (sh mountdocker).
+            Alternatively, you can run the following 2 commands in the /home to
+         make the windows directory available inside your virtual machine:
+              g1) sudo mkdir -p ltb/docker; cd ltb;
+              g2) sudo mount -t vboxfs win_docker docker
+
+              NB Note that sometimes the type to mount is vboxsf instead of 
+                vboxfs. If the mount command complains about the type, try the 
+                other one.
+    h) Repeat steps a-g for other shared dirs, e.g 
+        mkdir -p ltb/vendor; mount -t vboxfs my_vendor ltb/vendor
+8. Start a shell for the Linux virtual machine if you haven't done so already
+9. Go to the directory where you have placed your docker files (/home/ltb) <DOCKER> 
+    and type: sh startbox.sh where it is assumed that your base directory for 
+    docker is /home/ltb otherwise you have to search and replace this with your
+    actual <DOCKER> dir.
+   NB On Windows, you better run the command: sh win_start.sh which will also make
+    sure that all files are in Unix format -otherwise the process will be corrupted.
+10. If all went well you will see a terminal to the docker container started, so
+your actual server. You can leave it by typing (exit), that will leave your 
+server unharmed; you have no terminal open to it. If you like to enter again, 
+you will have to repeat the last command of the ltb_start script: 
+sh terminal_open.sh <OPTIONAL: name of container (default learningtoolbox-api>.
+
+To remove old Docker containers, you can type: 
+sudo docker ps -a | grep 'weeks ago' | awk '{print $1}' | xargs --no-run-if-empty docker rm
+To remove old images
+sudo docker images | grep "months ago" | awk '{print $3}' | xargs docker rmi
+
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)

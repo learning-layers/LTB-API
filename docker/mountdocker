@@ -1,0 +1,7 @@
+#!/bin/bash
+mkdir -p /home/ltb/ltbdocker;
+mkdir -p /home/ltb/vendor;
+cd /home/ltb;
+mount -t vboxsf docker docker;
+mount -t vboxsf vendor vendor;
+echo "Go to the directory /home/ltb/docker and type sh box_start.sh";

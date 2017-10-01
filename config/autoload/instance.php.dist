@@ -1,0 +1,155 @@
+<?php
+//If you are working from the Layers box. This should be true, otherwise false
+$use_docker = TRUE;
+$instance_oid_provider = 'oidc'; //or 'google' depending on the OIDC service we use
+
+if (! $use_docker){
+    $host = $_SERVER['SERVER_NAME'];
+    
+    //Some defaults for non-Layersbox case
+    $instance_scheme = 'http://';
+    $instance_uri_ts = 'Choose here the develop instance of the tilestore to talk to. For example: http://localhost:8383/LTB-Tilestore-App/app/';
+    $instance_hostname = 'localhost';
+    $instance_sss_target = 'Path to Social Semantic Server (like http://test-ll.know-center.tugraz.at/eval/)';
+    $instance_sss_default_version = 'v2';
+    //$instance_ss_version = '';//You can try a different version, if omitted, the default is used
+    
+    $instance_oidc_provider = "https://api.learning-layers.eu/o/oauth2";
+    $instance_oidc_client_id = 'OIDC CLIENT ID';
+    $instance_oidc_client_secret = 'OIDC CLIENT SECRET';
+    $instance_default_stack = 'CODE OF DEFAULT_STACK';
+        
+    if (_DEVELOP_ENV && ($host == 'localhost')){
+        //For the case where our instance is a local install on our local (WINDOWS) computer
+        $instance_db = 'Your local db name if you are working locally';
+        $instance_db_user = 'Your local db user if you are working locally';
+        $instance_db_pwd = 'Your local db password if you are working locally';
+        $instance_path = '/LTB-API/public/';
+        $instance_allow_debug = TRUE;
+        $instance_win_log = "YOUR Windows LOG";//Most likely in Temp dir
+        $instance_unix_log = "Irrelevant for Windows env";
+    } else {        
+        if ($host == 'some development host') {
+ 	       $instance_uri_ts = 'web instance of Tilestore';
+           $instance_home_dir = 'LOCAL HOME DIR dev api';//without end slash;
+           $instance_unix_log = "$instance_home_dir/LOG DIR /LOG FILE";
+           $instance_db = 'dev database name';
+        } else {
+           $instance_scheme = 'https://';
+           $instance_uri_ts = 'web instance of Tilestore';
+           $instance_home_dir = 'LOCAL HOME DIR production api';//without end slash;
+           $instance_unix_log = "$instance_home_dir/LOG DIR /LOG FILE";
+           $instance_db = 'production database name';
+        }
+        $instance_db_user = 'database name';
+        $instance_db_pwd = 'database password';
+        $instance_path = '/';
+        $instance_allow_debug = FALSE;
+        $instance_win_log = 'REPLACE:LTB_WIN_LOG_NONRELEVANT';
+    }
+    $instance_uri_api =  $instance_scheme.$host. $instance_path;
+    $instance_box_label = 'REPLACE:Some Label for the LearningToolBox';
+    $instance_box_id = sha1($instance_uri_api);
+} else {
+    $instance_hostname = "REPLACE:LTB_MYSQL_HOST";
+    $instance_db = 'REPLACE:LTB_MYSQL_DB';
+    $instance_db_pwd = 'REPLACE:LTB_MYSQL_PASSWORD';
+    $instance_db_user = 'REPLACE:LTB_MYSQL_USER';
+
+    $instance_oidc_provider = 'REPLACE:OIDC_URI';
+    $instance_oidc_client = 'REPLACE:OIDC_CLIENT';
+    $instance_oidc_secret = 'REPLACE:OIDC_SECRET';
+
+    $instance_uri_api = 'REPLACE:LTB_API_URI';
+    $instance_box_label = 'REPLACE:LEARNINGTOOLBOX_LABEL';
+    $instance_box_id = sha1($instance_uri_api);
+    $instance_uri_ts = 'REPLACE:LTB_TS_URI';
+    $instance_home_dir = 'REPLACE:LTB_HOME_DIR';
+    $instance_unix_log = 'REPLACE:LTB_UNIX_LOG';
+    $instance_win_log = 'REPLACE:LTB_WIN_LOG_NONRELEVANT';
+
+    $instance_sss_target = 'REPLACE:SSS_URI';
+    $instance_sss_version = 'REPLACE:SSS_VERSION';
+    $instance_default_stack = 'REPLACE:DEFAULT_STACK';
+}
+
+//TODO: NOt sure whether the embedly key is provided in the Docker process. If not
+//just provide it here
+$embedly_api_key = 'REPLACE:EMBEDLY_API_KEY';
+$unsplash_api_key = 'REPLACE:UNSPLASH_API_KEY';
+$pixabay_api_key = 'REPLACE:PIXABAY_API_KEY';
+//////////////////////////END of settings to replace by docker ///////////////
+
+switch ($instance_oid_provider){
+    case 'oidc':
+        $instance_oidc_provider_name = $instance_oid_provider;
+        $instance_oidc_provider_path = "/oauth/authorize";
+        $instance_oidc_scope = "email openid profile offline_access";
+        $instance_oidc_refresh_access_type = '';
+        $instance_oidc_endpoint = $instance_oidc_provider;
+        $instance_oidc_endpoint_token = "$instance_oidc_endpoint/token";
+        $instance_oidc_endpoint_userinfo = "$instance_oidc_endpoint/userinfo";
+        $instance_oidc_endpoint_logout = "$instance_oidc_endpoint/logout";
+    break;
+    case 'google':
+        $instance_oidc_provider_name = $instance_oid_provider;
+        $instance_oidc_provider = "https://accounts.google.com/o/oauth2";
+        $instance_oidc_provider_path = "/auth";
+        $instance_oidc_scope = "email%20openid%20profile";
+        $instance_oidc_refresh_access_type = 'offline';
+        $instance_oidc_endpoint = "https://www.googleapis.com/oauth2";
+        $instance_oidc_endpoint_token = "$instance_oidc_endpoint/v3/token";
+        $instance_oidc_endpoint_userinfo = "$instance_oidc_endpoint/userinfo";
+        $instance_oidc_endpoint_logout = "";
+        //$instance_oidc_endpoint_userinfo = "https://www.googleapis.com/plus/v1/people/me";
+        $instance_oidc_client_id = 'REPLACE:GOOGLE_CLIENT_ID';
+        $instance_oidc_client_secret = 'REPLACE:GOOGLE_CLIENT_SECRET';
+    break;
+}
+
+
+//To enable more extensive debug and error messages
+define('_DEBUG', _DEVELOP_ENV && $instance_allow_debug);
+
+define('_IMPLICIT', FALSE);//Whether to use an implicit client. Should be defined then.
+define('_EXPIRE_USER_HOURS', 3);//The hours before we require a user details update
+define('_EXPIRE_OIDC_HOURS', 1);//The hours before the OIDC session expires
+define('_STORE_USER_SESSION', FALSE);//Whether user session info is stored temporarily in the db
+define('_KEEP_USER_SESSION', FALSE); //Whether to keep or remove expired user sessions. Only relevant when also: _STORE_USER_SESSION
+define('_MAX_LOG_FILE', 500000);
+define('_MIN_KEEP_LOG_FILE', 100000);
+
+//This is the implicit client
+if (_IMPLICIT){
+   /////////////////This case is deprecated
+   $oidc_client_id = 'FILL IN THE OIDC CLIENT ID FOR THE IMPLICIT CLIENT';
+   $oidc_client_secret = 'SECRET';
+} else {
+   $oidc_client_id = $instance_oidc_client_id;
+   $oidc_client_secret = $instance_oidc_client_secret;
+}
+//When testing it is convenient to have the id of the tester and use the same session token
+//all the time to continue testing with postman without having to change the Authorization header
+//over and over again.
+define('_USE_SAME_SESSION_TOKEN', getenv('SOME_SECRET_TOKEN'));
+define('_LAZY_AUTH_SESSION', FALSE && _STORE_USER_SESSION && _DEBUG);
+define('_SWITCH_OFF_AUTH_CHECK', FALSE && _DEBUG);
+//Be very cautious with this! If we set this token, all tokens are overruled
+//and it is taken as if the last valid user sends its token again. This way we can test
+//directly calls in the browser without sending a token
+if (_USE_SAME_SESSION_TOKEN && _DEBUG && _SWITCH_OFF_AUTH_CHECK) {
+    define('_TEST_TOKEN', 'LocalBearer '._USE_SAME_SESSION_TOKEN);
+} else {
+    define('_TEST_TOKEN', '');
+}
+define('_MY_ID', 999);//These numbers are fictive of course TODO perhaps remove in next release
+define('_MY_OID_ID', 888);//?
+define('_MY_CODE', 'XXX');
+
+//If instance_oid_provider == google => problems since SSS will not connect with that server
+define('_CONNECT_SSS', ($instance_oid_provider == 'oidc')  && (!_SWITCH_OFF_AUTH_CHECK));
+//We can choose to ignore the sss result and keep our own administration as leading
+//TODO not everywhere applied yet
+define('_IGNORE_SSS_RESULT', TRUE);
+define('_URL_FIELD_DEPRECATED', FALSE);
+?>

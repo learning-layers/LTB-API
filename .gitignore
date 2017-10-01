@@ -1,0 +1,8 @@
+/vendor/
+/config/autoload/instance.php
+/nbproject/
+/user/
+/files/
+/data/todo_db
+/composer.phar
+/composer.lock
